@@ -2,7 +2,8 @@
 
 #pragma warning(disable : 4996)
 
-AdoAccess Server::dataBase = AdoAccess::AdoAccess();
+AdoAccess Server::database = AdoAccess::AdoAccess();
+//HANDLE Server::databaseSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
 
 Server::Server()
 {   
@@ -37,6 +38,8 @@ Server::Server()
 
 Server::~Server()
 {
+    database.~AdoAccess();
+    //CloseHandle(databaseSemaphore);
     evconnlistener_free(listener);
     event_base_free(base);
 }
@@ -78,9 +81,9 @@ void Server::readCb(bufferevent* bev, void* ctx)
     }
     else
     {
-        std::cout << "read" << fd << ": " << buf << std::endl;
         std::string tmpBuf = buf;
-        function(tmpBuf);
+        std::string result = function(tmpBuf);
+        bufferevent_write(bev, result.c_str(), result.size());
         return;
     }
 }
@@ -102,31 +105,62 @@ void Server::eventCb(bufferevent* bev, short what, void* ctx)
     }
 }
 
-void Server::function(std::string recv)
+std::string Server::function(std::string recv)
 {
     Json::Value root;
     Json::String errs;
     Json::CharReaderBuilder readBuilder;
     std::unique_ptr<Json::CharReader> jsonRead(readBuilder.newCharReader());
-    if (nullptr == jsonRead) {
+    if (nullptr == jsonRead) 
+    {
         std::cerr << "jsonRead is null" << std::endl;
-        return;
+        return "json error";
     }
 
     // reader将Json字符串解析到root，root将包含Json里所有子元素
     bool ret = jsonRead->parse(recv.c_str(),recv.c_str() + recv.length(), &root, &errs);
-    if (!ret || !errs.empty()) {
+    if (!ret || !errs.empty()) 
+    {
         std::cout << "parseJsonFromString error!" << errs << std::endl;
-        return;
+        return "json error";
     }
 
     std::string func = root["function"].asString();
-    if ("login" == func)
+
+    if (true == func.empty())
     {
-        std::string result = serverLogin(root, dataBase);
-        std::cout << result << std::endl;
+        return "no function";
     }
 
+    std::string result;
+
+    if ("login" == func)
+    {
+        result = serverLogin(root, database);
+    }
+
+    if ("updateTimeTable" == func)
+    {
+        result = serverUpdateTimeTable(root, database);
+    }
+
+    if ("getTimeTable" == func)
+    {
+        result = serverGetTimeTable(root, database);
+    }
+
+    /*if ("getTimeTable" == func)
+    {
+        result = serverGetTimeTable(root, database);
+    }*/
+
+    if (true == result.empty())
+    {
+        result = "function error";
+    }
+
+    std::cout << result << std::endl;
+    return result;
 
 }
 

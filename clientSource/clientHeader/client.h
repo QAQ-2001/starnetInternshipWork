@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <json/json.h>
+#include <iostream>
 
 #define BUFSIZE 1024
 
@@ -13,7 +14,7 @@ public:
     ~Client();
 
     void sendData(std::string str);
-    void recvData();
+    std::string recvData();
 private:
     char recvBuf[BUFSIZE];
     SOCKET clientSocket;

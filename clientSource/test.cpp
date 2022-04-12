@@ -1,102 +1,66 @@
 #include "client.h"
+#include "cOperation.h"
 #include <iostream>
 #include <Windows.h>
 #include <json/json.h>
 #include <fstream>
 #include <cstring>
-#include <cryptopp/cryptlib.h>
-#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
-#include <cryptopp/md5.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
 
-#include <iostream>
-#include <cstddef> 
-
-std::string encryptMd5(std::string str)
-{
-    std::string strMd5;
-    CryptoPP::Weak1::MD5 hash;
-    hash.Update((const unsigned char*)str.c_str(), str.length());
-    strMd5.resize(hash.DigestSize());
-    hash.Final((unsigned char*)&strMd5[0]);
-    return strMd5;
-}
+#include <thread>
+#include <future>
 
 using namespace std;
 using namespace Json;
+
+#include "code.h"
 
 enum Function
 {
     Login, Register, ChangePrior, AddProject, DelProject
 };
 
-void createJson()
+void hanshu(std::string strValue, string& token)
 {
-    string jsonStr;
-    Value root, userInfo, userArray;
-    StreamWriterBuilder writerBuilder; // 新式API
-    ostringstream os;
-    Value arrayObj;
-
-    try
-    {
-        // 设置默认无格式化的输出
-        //writerBuilder.settings_["indentation"] = "";
-
-        userInfo["username"] = "wangbingzhi";
-        userInfo["password"] = "girlfriend";
-        root.append(userInfo);
-
-        userInfo["username"] = "yellowmorn";
-        userInfo["password"] = "boy";
-        root.append(userInfo);
-
-        userArray["userInfo"] = Json::Value(root);
-
-        root["function"] = "Login";
-
-        // 这里使用智能指针
-        unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
-        jsonWriter->write(root, &os); // json-->stringstream
-        jsonStr = os.str(); // 转为string
-
-        /*Json::Value aim;
-        Json::String errs;
-        Json::CharReaderBuilder readBuilder;
-        std::unique_ptr<Json::CharReader> jsonRead(readBuilder.newCharReader());
-        if (nullptr == jsonRead) {
-            std::cerr << "jsonRead is null" << std::endl;
-            return;
-        }*/
-
-        //std::string username = root["userInfo"].asString();
-        //std::string password = root["userInfo"][i]["password"].asString();
-        //std::cout << ":" << username << " " << std::endl;
-        //Client client;
-        //client.sendData(jsonStr);
-        //// 无格式化的输出
-        std::cout << "Json-none:\n" << jsonStr << std::endl;
-        //// 格式化的输出
-        std::cout << "Json-formatted:\n" << root.toStyledString() << std::endl;
-    }
-    catch (const std::exception e)
-    {
-        std::cout << e.what() << std::endl;
-    }
+    Client client;
+    client.sendData(strValue);
+    token = client.recvData();
 }
 
-int main()
+void myTime(std::string strValue)
 {
-    //writeJson();
-	//char buf2[10] = "world";
-    //readJson();
-    //createJson();
-	//CreateThread(NULL, 0, thread1, (void*)buf1, 0, NULL);
-	//CreateThread(NULL, 0, thread1, (void*)buf2, 0, NULL);
-	/*Sleep(10000);*/
-    // 构建json数组
-    Json::Value userArray;
+    Client client;
+    client.sendData(strValue);
+    client.recvData();
+}
+
+std::string createString2()
+{
+    Json::Value root;
+    Json::Value person;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    person["loginName"] = "T2021";
+    person["password"] = encryptMd5("34vs");
+
+    root["userArray"].append(person);
+    root["function"] = "login";
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    // 解析Json字符串
+    //string strValue = root.toStyledString();      // json对象转变为json字符串
+    return data;
+}
+
+std::string createString1()
+{
     Json::Value root;
     Json::Value person;
 
@@ -104,69 +68,220 @@ int main()
     ostringstream os;
 
     //root.append(userArray);
-    person["username"] = "yellow";
-    person["password"] = "we";
+    person["loginName"] = "T2022";
+    person["password"] = encryptMd5("wqe");
     //person["sex"] = "male";
     root["userArray"].append(person);
     root["function"] = "login";
-
-    /*person["name"] = "keiv";
-    person["age"] = 20;
-    person["sex"] = "female";
-    root.append(person);
-
-    person["name"] = "lihua";
-    person["age"] = 10;
-    person["sex"] = "female";
-    root.append(person);*/
-
-    // 添加数组格式
-    //userArray["userArray"].append(root);
-
-    // 子节点挂到根节点上
-    //userArray["userArray"] = Json::Value(root);
+    writerBuilder.settings_["emitUTF8"] = true;
 
     // 这里使用智能指针
     unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
     jsonWriter->write(root, &os); // json-->stringstream
     string data = os.str(); // 转为string
 
-    cout<<data<<endl;  
-    //cout<<userArray.toStyledString()<<endl;
+    return data;
+}
+
+std::string createString3()
+{
+    Json::Value root;
+    Json::Value person;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    person["loginName"] = "T2023";
+    person["password"] = encryptMd5("test");
+    //person["sex"] = "male";
+    root["userArray"].append(person);
+    root["function"] = "login";
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    cout << data << endl;
+
+    return data;
+}
+
+std::string createStringTimeTable1(string token)
+{
+    Json::Value root;
+    Json::Value timeTable;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    root["function"] = "updateTimeTable";
+    timeTable["projectName"] = "del";
+    timeTable["duration"] = "10";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    timeTable["projectName"] = "io";
+    timeTable["duration"] = "10";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    root["token"] = token;
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    return data;
+}
+
+std::string createStringTimeTable2(string token)
+{
+    Json::Value root;
+    Json::Value timeTable;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    root["function"] = "updateTimeTable";
+    timeTable["projectName"] = "del";
+    timeTable["duration"] = "66";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    timeTable["projectName"] = "io";
+    timeTable["duration"] = "66";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    root["token"] = token;
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    return data;
+}
+
+std::string createStringTimeTable3(string token)
+{
+    Json::Value root;
+    Json::Value timeTable;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    root["function"] = "updateTimeTable";
+    timeTable["projectName"] = "del";
+    timeTable["duration"] = "3";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    timeTable["projectName"] = "io";
+    timeTable["duration"] = "4";
+    timeTable["myDate"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    root["token"] = token;
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    return data;
+}
+
+std::string getStringTimeTable(string token, string startDate, string endDate, string range, string total)
+{
+    Json::Value root;
+    Json::Value timeTable;
+
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
+    writerBuilder.settings_["emitUTF8"] = true;
+
+    //root.append(userArray);
+    root["function"] = "getTimeTable";
+    root["token"] = token;
+    timeTable["startDate"] = startDate;
+    timeTable["endDate"] = endDate;
+    timeTable["range"] = range;
+    timeTable["total"] = total;
+    root["timeTable"].append(timeTable);
+
+    // 这里使用智能指针
+    unique_ptr<StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(root, &os); // json-->stringstream
+    string data = os.str(); // 转为string
+
+    return data;
+}
 
 
-    // 解析Json字符串
-    string strValue = root.toStyledString();      // json对象转变为json字符串
-    cout << strValue << endl;
+int main()
+{
+    Json::Value userArray;
+    Json::Value root;
+    Json::Value timeTable;
 
-    /*Json::Value value;
-    Json::String errs;
-    Json::CharReaderBuilder readBuilder;
+    StreamWriterBuilder writerBuilder; // 新式API
+    ostringstream os;
 
-    std::unique_ptr<Json::CharReader> jsonRead(readBuilder.newCharReader());
-    if (nullptr == jsonRead) {
-        std::cerr << "jsonRead is null" << std::endl;
-        return 0;
-    }*/
+    timeTable["projectName"] = "del";
+    timeTable["duration"] = "2";
+    timeTable["time"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    timeTable["projectName"] = "io";
+    timeTable["duration"] = "3";
+    timeTable["time"] = "2020-1-1";
+    root["projects"].append(timeTable);
+    root["userId"] = "1";
 
-    // reader将Json字符串解析到root，root将包含Json里所有子元素
-    //bool ret = jsonRead->parse(strValue.c_str(), strValue.c_str() + strValue.length(), &value, &errs);
-    //if (!ret || !errs.empty())// json字符串转为json对象
-    //{
-    //    std::cout << "parseJsonFromString error!" << errs << std::endl;
-    //    return 0;
-    //}
-    Client client;
-    client.sendData(strValue);
+    std::string token1;
+    std::string token2;
+    std::string token3;
 
-    /*for (unsigned int i = 0; i < value["userArray"].size(); i++)
-    {
-        string name = value["userArray"][i]["name"].asString();
-        int     age = value["userArray"][i]["age"].asInt();
-        string sex = value["userArray"][i]["sex"].asString();
+    string strValue1 = createString1();
+    //string strValue2 = createString2();
+    //string strValue3 = createString3();
 
-        cout << name << " " << age << " " << sex << endl;
-    }*/
+    //std::cout << strValue3 << std::endl;
+
+    //thread thread2(hanshu, strValue2, ref(token2));
+    thread thread1(hanshu, strValue1, ref(token1));
+    //thread thread3(hanshu, strValue3, ref(token3));
+    thread1.join();
+    //thread2.join();
+    //thread3.join();
+
+    std::vector<std::string> vtoken1 = split(token1, ",");
+    //std::vector<std::string> vtoken2 = split(token2, ",");
+    //std::vector<std::string> vtoken3 = split(token3, ",");
+
+    token1 = vtoken1[0];
+    //token2 = vtoken2[0];
+    //token3 = vtoken3[0];
+
+    //std::cout << token1 << std::endl;
+
+    strValue1 = getStringTimeTable(token1,"2020-1-1","2020-1-2","all","");
+    //strValue2 = createStringTimeTable2(token2);
+    //strValue3 = createStringTimeTable3(token3);//测试再次提交的更改功能
+
+    //std::cout << strValue3 << std::endl;
+
+    thread thread4(myTime, strValue1);
+    //thread thread5(myTime, strValue2);
+    //thread thread6(myTime, strValue3);
+
+    thread4.join();
+    //thread5.join();
+    //thread6.join();
 
 	return 0;
 }
